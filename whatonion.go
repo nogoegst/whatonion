@@ -46,6 +46,7 @@ func PubkeyFromKeyfile(filename string) (pk *rsa.PublicKey, err error) {
 }
 
 func main() {
+	var fingerprintFlag = flag.Bool("fp", false, "Get relay fingerprint instead of onion address")
 	flag.Parse()
 	args := flag.Args()
 	if len(args) != 1 {
@@ -55,9 +56,17 @@ func main() {
 	if err != nil {
 		log.Fatalf("Unable to get public key from the file: %v", err)
 	}
-	onionAddress, err := onionutil.OnionAddress(pubkey)
-	if err != nil {
-		log.Fatalf("Unable to calculate onion address based on public key: %v", err)
+	if *fingerprintFlag {
+		fingerprint, err := onionutil.RSAPubkeyHash(pubkey)
+		if err != nil {
+			log.Fatalf("Unable to calculate relay fingerprint: %v", err)
+		}
+		fmt.Printf("%X\n", fingerprint)
+	} else {
+		onionAddress, err := onionutil.OnionAddress(pubkey)
+		if err != nil {
+			log.Fatalf("Unable to calculate onion address based on public key: %v", err)
+		}
+		fmt.Printf("%s\n", onionAddress)
 	}
-	fmt.Printf("%s\n", onionAddress)
 }
